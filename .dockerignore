@@ -1,0 +1,13 @@
+*
+
+!go.*
+!*.go
+!cmd/
+!pkg/
+!internal/
+!vendor/
+!static/
+!api/
+!web/
+!configs/
+!test/
