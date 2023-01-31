@@ -5,6 +5,16 @@ import (
 	"io"
 	"os"
 
+	"context"
+	"path/filepath"
+
+	"oss.terrastruct.com/d2/d2format"
+	"oss.terrastruct.com/d2/d2layouts/d2dagrelayout"
+	"oss.terrastruct.com/d2/d2lib"
+	"oss.terrastruct.com/d2/d2oracle"
+	"oss.terrastruct.com/d2/d2renderers/d2svg"
+	"oss.terrastruct.com/d2/lib/textmeasure"
+
 	"github.com/spf13/pflag"
 	"gitlab.com/garzelli95/go-net-gen/internal/log"
 )
@@ -61,5 +71,37 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 
 	logger.Info("Setup completed")
 
+	d2hello()
+
 	return nil
+}
+
+func d2hello() {
+	ctx := context.Background()
+	// Start with a new, empty graph
+	_, graph, _ := d2lib.Compile(ctx, "", nil)
+
+	// Create a shape, "meow"
+	graph, _, _ = d2oracle.Create(graph, "meow")
+
+	// Turn the graph into a script (which would just be "meow")
+	script := d2format.Format(graph.AST)
+
+	// Initialize a ruler to measure font glyphs
+	ruler, _ := textmeasure.NewRuler()
+
+	// Compile the script into a diagram
+	diagram, _, _ := d2lib.Compile(context.Background(), script, &d2lib.CompileOptions{
+		Layout: d2dagrelayout.DefaultLayout,
+		Ruler:  ruler,
+	})
+
+	// Render to SVG
+	out, _ := d2svg.Render(diagram, &d2svg.RenderOpts{
+		Pad: d2svg.DEFAULT_PADDING,
+	})
+
+	// Write to disk
+	_ = os.WriteFile(filepath.Join("out.svg"), out, 0600)
+	_ = os.WriteFile(filepath.Join("out.d2"), []byte(script), 0600)
 }

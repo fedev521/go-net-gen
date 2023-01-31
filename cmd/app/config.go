@@ -36,6 +36,7 @@ func configureDefaultSettings() {
 	// config file settings
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("configs")
+	viper.AddConfigPath("../../configs")
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 
