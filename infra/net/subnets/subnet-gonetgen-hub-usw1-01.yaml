@@ -1,0 +1,3 @@
+region: us-west1
+description: Hub default subnet.
+ip_cidr_range: 10.0.0.0/24

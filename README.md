@@ -25,3 +25,8 @@ D2 quick start:
 echo 'x -> y' > helloworld.d2
 d2 -w helloworld.d2 out.png
 ```
+
+## TODO
+
+- generate service account key in Terraform without storing it state: [blueprint](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/v19.0.0/blueprints/cloud-operations/onprem-sa-key-management)
+
