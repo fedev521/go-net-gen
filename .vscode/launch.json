@@ -7,7 +7,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "cmd/app"
+            "program": "cmd/app",
+            "env": {
+                "GOOGLE_APPLICATION_CREDENTIALS": "../../secrets/gonetgen-sa-key.json",
+            }
         },
     ]
 }

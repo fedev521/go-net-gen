@@ -46,12 +46,11 @@ func configureDefaultSettings() {
 	viper.AutomaticEnv()
 
 	// flags configuration
-	pflag.StringP("port", "p", "8080", "Port to run the application server on")
-	viper.BindPFlag("app.port", pflag.Lookup("port"))
+	pflag.String("hub-project-id", "", "Hub project id on GCP")
+	viper.BindPFlag("app.hub_project_id", pflag.Lookup("hub-project-id"))
 
 	// config defaults
 	viper.SetDefault("log.level", "info")
-	viper.SetDefault("app.port", "8080")
 }
 
 // Reads, unmarshals and post-processes configuration.

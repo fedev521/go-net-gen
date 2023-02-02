@@ -8,6 +8,11 @@ import (
 	"context"
 	"path/filepath"
 
+	compute "cloud.google.com/go/compute/apiv1"
+	"cloud.google.com/go/compute/apiv1/computepb"
+	"google.golang.org/api/iterator"
+	"google.golang.org/protobuf/proto"
+
 	"oss.terrastruct.com/d2/d2format"
 	"oss.terrastruct.com/d2/d2layouts/d2dagrelayout"
 	"oss.terrastruct.com/d2/d2lib"
@@ -16,6 +21,7 @@ import (
 	"oss.terrastruct.com/d2/lib/textmeasure"
 
 	"github.com/spf13/pflag"
+	"gitlab.com/garzelli95/go-net-gen/internal/app"
 	"gitlab.com/garzelli95/go-net-gen/internal/log"
 )
 
@@ -65,18 +71,63 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 	}
 
 	logger.Info("App started", map[string]interface{}{
-		"name": config.App.Name,
-		"port": config.App.Port,
+		"name":           config.App.Name,
+		"hub_project_id": config.App.HubProject,
 	})
 
 	logger.Info("Setup completed")
 
-	d2hello()
+	err = ListAllInstances(config.App)
+	if err != nil {
+		logger.Error(err.Error())
+		return fmt.Errorf("cannot connect to GCP: %w", err)
+	}
 
 	return nil
 }
 
-func d2hello() {
+func ListAllInstances(config app.Config) error {
+	projectID := config.HubProject
+
+	ctx := context.Background()
+	instancesClient, err := compute.NewInstancesRESTClient(ctx)
+	if err != nil {
+		return fmt.Errorf("NewInstancesRESTClient: %v", err)
+	}
+	defer instancesClient.Close()
+
+	// Use the `MaxResults` parameter to limit the number of results that the
+	// API returns per response page.
+	req := &computepb.AggregatedListInstancesRequest{
+		Project:    projectID,
+		MaxResults: proto.Uint32(3),
+	}
+
+	it := instancesClient.AggregatedList(ctx, req)
+
+	// Despite using the `MaxResults` parameter, you don't need to handle the
+	// pagination yourself. The returned iterator object handles pagination
+	// automatically, returning separated pages as you iterate over the results.
+	for {
+		pair, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		instances := pair.Value.Instances
+		if len(instances) > 0 {
+			fmt.Printf("%s\n", pair.Key)
+			for _, instance := range instances {
+				fmt.Printf("- %s %s\n", instance.GetName(), instance.GetMachineType())
+			}
+		}
+	}
+	return nil
+}
+
+func D2hello() {
 	ctx := context.Background()
 	// Start with a new, empty graph
 	_, graph, _ := d2lib.Compile(ctx, "", nil)

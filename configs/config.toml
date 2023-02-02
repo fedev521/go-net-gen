@@ -2,16 +2,5 @@
 level = "info"
 
 [app]
-name = "myapp"
-port = "8080"
-
-[telemetry]
-addr = ":10000"
-
-[database]
-host = "localhost"
-port = "3306"
-user = "root"
-name = "app"
-
-storage = "inmemory"
+name = "gonetgen"
+hub_project_id = "prj-gonetgen-infra-hub"

@@ -6,8 +6,8 @@ import "errors"
 type Config struct {
 	// Name of the app.
 	Name string
-	// Port of the application server
-	Port string
+	// Hub project id on Google Cloud.
+	HubProject string `mapstructure:"hub_project_id"`
 }
 
 // Validate checks the whether the Config is valid. Returns a non-nil error if
@@ -15,6 +15,9 @@ type Config struct {
 func (c Config) Validate() error {
 	if c.Name == "" {
 		return errors.New("app name cannot be empty")
+	}
+	if c.HubProject == "" {
+		return errors.New("hub project id cannot be empty")
 	}
 	return nil
 }

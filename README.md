@@ -1,5 +1,11 @@
 # Go Net Gen
 
+## Setup
+
+- `terraform init && terraform apply`
+- download service account key from GCP
+- `cd secrets && export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gonetgen-sa-key.json"`
+
 ## Boilerplate
 
 Features:
