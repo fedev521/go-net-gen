@@ -7,3 +7,12 @@ module "spoke1_project" {
     "compute.googleapis.com",
   ]
 }
+
+module "spoke1_vpc" {
+  source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-vpc?ref=v19.0.0"
+  project_id  = module.spoke1_project.project_id
+  name        = "vpc-gonetgen-spoke1-01"
+  data_folder = "net/subnets/spoke1"
+
+  # peered with hub_vpc
+}

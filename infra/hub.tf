@@ -12,7 +12,30 @@ module "hub_vpc" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-vpc?ref=v19.0.0"
   project_id  = module.hub_project.project_id
   name        = "vpc-gonetgen-hub-01"
-  data_folder = "net/subnets"
+  data_folder = "net/subnets/hub"
+}
+
+module "peering_hub_spoke1" {
+  source = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-vpc-peering?ref=v19.0.0"
+  prefix = "peering-"
+
+  local_network              = module.hub_vpc.self_link
+  peer_network               = module.spoke1_vpc.self_link
+  export_local_custom_routes = true # hub -> spoke1
+  export_peer_custom_routes  = true # spoke1 -> hub
+  peer_create_peering        = true # create peering in both directions
+}
+
+module "peering_hub_spoke2" {
+  source = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-vpc-peering?ref=v19.0.0"
+  prefix = "peering-"
+
+  local_network              = module.hub_vpc.self_link
+  peer_network               = module.spoke2_vpc.self_link
+  export_local_custom_routes = true # hub -> spoke2
+  export_peer_custom_routes  = true # spoke2 -> hub
+  peer_create_peering        = true # create peering in both directions
+  depends_on                 = [module.peering_hub_spoke1]
 }
 
 module "gonetgen_sa" {
