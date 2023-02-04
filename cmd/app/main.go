@@ -77,7 +77,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 
 	logger.Info("Setup completed")
 
-	err = ListAllInstances(config.App)
+	err = ListNetworks(config.App)
 	if err != nil {
 		logger.Error(err.Error())
 		return fmt.Errorf("cannot connect to GCP: %w", err)
@@ -92,7 +92,7 @@ func ListAllInstances(config app.Config) error {
 	ctx := context.Background()
 	instancesClient, err := compute.NewInstancesRESTClient(ctx)
 	if err != nil {
-		return fmt.Errorf("NewInstancesRESTClient: %v", err)
+		return err
 	}
 	defer instancesClient.Close()
 
@@ -124,6 +124,36 @@ func ListAllInstances(config app.Config) error {
 			}
 		}
 	}
+	return nil
+}
+
+func ListNetworks(config app.Config) error {
+	projectID := config.HubProject
+
+	ctx := context.Background()
+	networksClient, err := compute.NewNetworksRESTClient(ctx)
+	if err != nil {
+		return err
+	}
+	defer networksClient.Close()
+
+	req := &computepb.ListNetworksRequest{
+		Project:    projectID,
+		MaxResults: proto.Uint32(3),
+	}
+	it := networksClient.List(ctx, req)
+	for {
+		network, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Peering: %v\n", network.Peerings)
+	}
+
 	return nil
 }
 
