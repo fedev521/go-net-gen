@@ -17,7 +17,7 @@ module "hub_vpc" {
 
 module "peering_hub_spoke1" {
   source = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-vpc-peering?ref=v19.0.0"
-  prefix = "peering-"
+  prefix = "peering"
 
   local_network              = module.hub_vpc.self_link
   peer_network               = module.spoke1_vpc.self_link
@@ -28,7 +28,7 @@ module "peering_hub_spoke1" {
 
 module "peering_hub_spoke2" {
   source = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-vpc-peering?ref=v19.0.0"
-  prefix = "peering-"
+  prefix = "peering"
 
   local_network              = module.hub_vpc.self_link
   peer_network               = module.spoke2_vpc.self_link
