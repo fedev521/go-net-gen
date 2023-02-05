@@ -11,5 +11,5 @@ trim_trailing_whitespace = true
 [*.go]
 indent_style = tab
 
-[*.yml, *.yaml, *.tf, *.tfvars]
+[*.yml, *.yaml, *.tf, *.tfvars, *.d2]
 indent_size = 2
