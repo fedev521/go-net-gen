@@ -77,11 +77,13 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 
 	logger.Info("Setup completed")
 
-	err = ListNetworks(config.App)
+	err = CreateDiagram(config.App)
 	if err != nil {
 		logger.Error(err.Error())
-		return fmt.Errorf("cannot connect to GCP: %w", err)
+		return err
 	}
+
+	logger.Info("End")
 
 	return nil
 }
@@ -157,32 +159,61 @@ func ListNetworks(config app.Config) error {
 	return nil
 }
 
-func D2hello() {
-	ctx := context.Background()
-	// Start with a new, empty graph
-	_, graph, _ := d2lib.Compile(ctx, "", nil)
+func CreateDiagram(config app.Config) error {
+	// Start with a new, empty graph g
+	_, g, err := d2lib.Compile(context.Background(), "", nil)
+	if err != nil {
+		return err
+	}
 
-	// Create a shape, "meow"
-	graph, _, _ = d2oracle.Create(graph, "meow")
+	// Create shapes
+	g, _, _ = d2oracle.Create(g, "hub")
+	g, _, _ = d2oracle.Create(g, "spk1")
+	g, _, _ = d2oracle.Create(g, "spk2")
 
-	// Turn the graph into a script (which would just be "meow")
-	script := d2format.Format(graph.AST)
+	g, _, _ = d2oracle.Create(g, "hub.prj")
+	g, _, _ = d2oracle.Create(g, "spk1.prj")
+	g, _, _ = d2oracle.Create(g, "spk2.prj")
+
+	// Assign labels
+	label1, label2 := "Spoke 1 VPC", "Spoke 2 VPC"
+	g, _ = d2oracle.Set(g, "spk1.label", nil, &label1)
+	g, _ = d2oracle.Set(g, "spk2.label", nil, &label2)
+
+	// Create connections
+	vpcPeering := "VPC Peering"
+	g, k1, _ := d2oracle.Create(g, "hub <-> spk1")
+	g, _ = d2oracle.Set(g, fmt.Sprintf("%s.label", k1), nil, &vpcPeering)
+	g, k2, _ := d2oracle.Create(g, "hub <-> spk2")
+	g, _ = d2oracle.Set(g, fmt.Sprintf("%s.label", k2), nil, &vpcPeering)
+
+	// Beutify with icons
+	image := "image"
+	vpcIcon := "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FVirtual%20Private%20Cloud.svg"
+	g, _ = d2oracle.Set(g, "hub.prj.icon", nil, &vpcIcon)
+	g, _ = d2oracle.Set(g, "hub.prj.shape", nil, &image)
+
+	// Turn the graph into a script
+	script := d2format.Format(g.AST)
 
 	// Initialize a ruler to measure font glyphs
 	ruler, _ := textmeasure.NewRuler()
 
 	// Compile the script into a diagram
-	diagram, _, _ := d2lib.Compile(context.Background(), script, &d2lib.CompileOptions{
+	ctx := context.Background()
+	diagram, _, _ := d2lib.Compile(ctx, script, &d2lib.CompileOptions{
 		Layout: d2dagrelayout.DefaultLayout,
 		Ruler:  ruler,
 	})
 
 	// Render to SVG
-	out, _ := d2svg.Render(diagram, &d2svg.RenderOpts{
+	diagramImage, _ := d2svg.Render(diagram, &d2svg.RenderOpts{
 		Pad: d2svg.DEFAULT_PADDING,
 	})
 
-	// Write to disk
-	_ = os.WriteFile(filepath.Join("out.svg"), out, 0600)
+	// Write to disk the script and the SVG image
+	_ = os.WriteFile(filepath.Join("out.svg"), diagramImage, 0600)
 	_ = os.WriteFile(filepath.Join("out.d2"), []byte(script), 0600)
+
+	return nil
 }

@@ -35,4 +35,9 @@ d2 -w helloworld.d2 out.png
 ## TODO
 
 - generate service account key in Terraform without storing it state: [blueprint](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/v19.0.0/blueprints/cloud-operations/onprem-sa-key-management)
+- support different kinds of diagrams, e.g., focus on networking or on VMs
 
+## Next
+
+- read information about related projects with GCP client library
+- put read information in a programmatically generated diagram
