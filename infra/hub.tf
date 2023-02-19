@@ -52,5 +52,11 @@ module "gonetgen_sa" {
     (module.hub_project.project_id) = [
       "roles/compute.networkViewer",
     ]
+    (module.spoke1_project.project_id) = [
+      "roles/compute.networkViewer",
+    ]
+    (module.spoke2_project.project_id) = [
+      "roles/compute.networkViewer",
+    ]
   }
 }
