@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"gitlab.com/garzelli95/go-net-gen/internal/app"
+	"gitlab.com/garzelli95/go-net-gen/internal/gcputils"
 	"gitlab.com/garzelli95/go-net-gen/internal/log"
 )
 
@@ -77,7 +78,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 
 	logger.Info("Setup completed")
 
-	err = CreateDiagram(config.App)
+	err = ListNetworks(config.App)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -88,9 +89,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 	return nil
 }
 
-func ListAllInstances(config app.Config) error {
-	projectID := config.HubProject
-
+func ListAllInstances(projectID string) error {
 	ctx := context.Background()
 	instancesClient, err := compute.NewInstancesRESTClient(ctx)
 	if err != nil {
@@ -119,11 +118,8 @@ func ListAllInstances(config app.Config) error {
 			return err
 		}
 		instances := pair.Value.Instances
-		if len(instances) > 0 {
-			fmt.Printf("%s\n", pair.Key)
-			for _, instance := range instances {
-				fmt.Printf("- %s %s\n", instance.GetName(), instance.GetMachineType())
-			}
+		for _, vm := range instances {
+			fmt.Printf("- %s in %s\n", vm.GetName(), pair.Key)
 		}
 	}
 	return nil
@@ -153,7 +149,21 @@ func ListNetworks(config app.Config) error {
 			return err
 		}
 
-		fmt.Printf("Peering: %v\n", network.Peerings)
+		fmt.Printf("Peerings of %v:\n", network.GetName())
+		for _, peering := range network.Peerings {
+			fmt.Printf("- %v\n", gcputils.GetVPCFromVPC(peering.GetNetwork()))
+		}
+
+		fmt.Printf("Subnets of %v:\n", network.GetSelfLink())
+		for _, subnet := range network.GetSubnetworks() {
+			fmt.Printf("- %v\n", subnet)
+		}
+
+		fmt.Println("VMs:")
+		ListAllInstances(projectID)
+		for _, peering := range network.Peerings {
+			ListAllInstances(gcputils.GetProjectFromVPC(peering.GetNetwork()))
+		}
 	}
 
 	return nil
