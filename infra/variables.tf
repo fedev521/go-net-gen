@@ -4,3 +4,9 @@ variable "billing_account" {
   sensitive   = true
   default     = null
 }
+
+variable "free_machine_type" {
+  description = "VM machine type in the free tier. Don't change the value."
+  type        = string
+  default     = "e2-micro"
+}
