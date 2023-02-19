@@ -32,4 +32,8 @@ module "spoke1_vm_01" {
     network    = module.spoke1_vpc.self_link
     subnetwork = local.spoke1_subnet.self_link
   }]
+
+  boot_disk = {
+    type = "pd-standard"
+  }
 }
