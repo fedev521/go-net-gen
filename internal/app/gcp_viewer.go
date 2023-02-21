@@ -139,3 +139,37 @@ func GetDistinctProjects(subnets []Subnet) []string {
 
 	return projects
 }
+
+func RetrieveVMs(projectID string) ([]VM, error) {
+	vms := []VM{}
+
+	ctx := context.Background()
+	instancesClient, err := compute.NewInstancesRESTClient(ctx)
+	if err != nil {
+		return []VM{}, err
+	}
+	defer instancesClient.Close()
+
+	// get information about VM instances
+	req := &computepb.AggregatedListInstancesRequest{
+		Project: projectID,
+	}
+	it := instancesClient.AggregatedList(ctx, req)
+
+	for {
+		pair, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return []VM{}, err
+		}
+
+		// build each VM (for each <zone,vm> pair)
+		for _, vm := range pair.Value.Instances {
+			vms = append(vms, NewVM(vm))
+		}
+	}
+
+	return vms, nil
+}

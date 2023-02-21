@@ -123,6 +123,19 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 	for _, p := range projects {
 		fmt.Printf("- %v\n", p)
 	}
+	fmt.Println("VMs:")
+	allVMs := []app.VM{}
+	for _, project := range projects {
+		vms, err := app.RetrieveVMs(project)
+		if err != nil {
+			logger.Error(err.Error())
+			return err
+		}
+		allVMs = append(allVMs, vms...)
+	}
+	for _, vm := range allVMs {
+		fmt.Printf("- %v %v\n", vm.Name, vm.InternalIP)
+	}
 
 	logger.Info("End")
 

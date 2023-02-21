@@ -59,5 +59,17 @@ type VM struct {
 }
 
 func NewVM(pb *computepb.Instance) VM {
-	return VM{} // TODO implement
+	extIP := ""
+	ac := pb.GetNetworkInterfaces()[0].GetAccessConfigs()
+	if len(ac) > 0 {
+		extIP = ac[0].GetNatIP()
+	}
+	return VM{
+		SelfLink:   pb.GetSelfLink(),
+		Name:       pb.GetName(),
+		Project:    gcputils.GetVMProject(pb.GetSelfLink()),
+		Zone:       gcputils.GetVMZone(pb.GetSelfLink()),
+		InternalIP: pb.GetNetworkInterfaces()[0].GetNetworkIP(),
+		ExternalIP: extIP,
+	}
 }
