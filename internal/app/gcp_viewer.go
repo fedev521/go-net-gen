@@ -11,6 +11,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// Given a project id (of the "hub"), RetrieveVPCsAndPeerings returns two slices
+// (after querying Google API). One contains all VPCs in the hub project as well
+// as all VPCs peered to that project; the other information about peergings, if
+// any.
 func RetrieveVPCsAndPeerings(hubProjectID string) ([]VPC, []VPCPeering, error) {
 	// The function's results, i.e., all VPCs and peerings to be considered
 	vpcs := []VPC{}
@@ -77,6 +81,8 @@ func RetrieveVPCsAndPeerings(hubProjectID string) ([]VPC, []VPCPeering, error) {
 	return vpcs, peerings, nil
 }
 
+// Given a VPC structure, RetrieveVPCSubnets returns a slice of the subnets
+// belonging to that VPC (after querying Google API).
 func RetrieveVPCSubnets(vpc VPC) ([]Subnet, error) {
 	subnets := []Subnet{}
 
@@ -116,4 +122,20 @@ func RetrieveVPCSubnets(vpc VPC) ([]Subnet, error) {
 	}
 
 	return subnets, nil
+}
+
+// Given a slice of subnets, GetDistinctProjects returns a slice with no
+// duplicates of projects containing those subnets.
+func GetDistinctProjects(subnets []Subnet) []string {
+	projects := []string{}
+	presence := make(map[string]bool)
+
+	for _, subnet := range subnets {
+		if !presence[subnet.Project] {
+			presence[subnet.Project] = true
+			projects = append(projects, subnet.Project)
+		}
+	}
+
+	return projects
 }

@@ -93,7 +93,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 			gcputils.GetVPCName(peering.VPC1SelfLink),
 			gcputils.GetVPCName(peering.VPC2SelfLink))
 	}
-	fmt.Println("Subnets:")
+	fmt.Println("Subnets by VPC:")
 	for _, vpc := range vpcs {
 		fmt.Printf("- vpc: %v\n", vpc.Name)
 		subnets, err := app.RetrieveVPCSubnets(vpc)
@@ -102,8 +102,26 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 			return err
 		}
 		for _, subnet := range subnets {
-			fmt.Printf("  - %v %v\n", subnet.Name, subnet.IPv4Range)
+			fmt.Printf("  - %v %v\n", subnet.IPv4Range, subnet.Name)
 		}
+	}
+	fmt.Println("Subnets:")
+	allSubnets := []app.Subnet{}
+	for _, vpc := range vpcs {
+		subnets, err := app.RetrieveVPCSubnets(vpc)
+		if err != nil {
+			logger.Error(err.Error())
+			return err
+		}
+		allSubnets = append(allSubnets, subnets...)
+	}
+	for _, subnet := range allSubnets {
+		fmt.Printf("- %v %v\n", subnet.Name, subnet.IPv4Range)
+	}
+	fmt.Println("Projects:")
+	projects := app.GetDistinctProjects(allSubnets)
+	for _, p := range projects {
+		fmt.Printf("- %v\n", p)
 	}
 
 	logger.Info("End")
