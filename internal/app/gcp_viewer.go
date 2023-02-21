@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/apiv1/computepb"
@@ -10,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func GetVPCsAndPeerings(hubProjectID string) ([]VPC, []VPCPeering, error) {
+func RetrieveVPCsAndPeerings(hubProjectID string) ([]VPC, []VPCPeering, error) {
 	// The function's results, i.e., all VPCs and peerings to be considered
 	vpcs := []VPC{}
 	peerings := []VPCPeering{}
@@ -59,8 +60,8 @@ func GetVPCsAndPeerings(hubProjectID string) ([]VPC, []VPCPeering, error) {
 
 		// TODO: parallellize Get requests
 		getReq := &computepb.GetNetworkRequest{
-			Network: gcputils.GetVPCFromVPC(peerSelfLink),
-			Project: gcputils.GetProjectFromVPC(peerSelfLink),
+			Network: gcputils.GetVPCName(peerSelfLink),
+			Project: gcputils.GetVPCProject(peerSelfLink),
 		}
 
 		network, err := networksClient.Get(ctx, getReq)
@@ -74,4 +75,45 @@ func GetVPCsAndPeerings(hubProjectID string) ([]VPC, []VPCPeering, error) {
 	// TODO: remove duplicates from vpcs and peerings
 
 	return vpcs, peerings, nil
+}
+
+func RetrieveVPCSubnets(vpc VPC) ([]Subnet, error) {
+	subnets := []Subnet{}
+
+	ctx := context.Background()
+	subnetsClient, err := compute.NewSubnetworksRESTClient(ctx)
+	if err != nil {
+		return []Subnet{}, err
+	}
+	defer subnetsClient.Close()
+
+	// retrieve information about subnets within each VPC (in parallel)
+	n := len(vpc.Subnets)
+	ch := make(chan *computepb.Subnetwork, n)
+	for _, subnetSelfLink := range vpc.Subnets {
+		go func(ssl string, ch chan *computepb.Subnetwork) {
+			req := &computepb.GetSubnetworkRequest{
+				Project:    gcputils.GetSubnetProject(ssl),
+				Region:     gcputils.GetSubnetRegion(ssl),
+				Subnetwork: gcputils.GetSubnetName(ssl),
+			}
+			subnet, err := subnetsClient.Get(ctx, req)
+			if err != nil {
+				ch <- nil
+			} else {
+				ch <- subnet
+			}
+		}(subnetSelfLink, ch)
+	}
+
+	// gather results and build return value
+	for i := 0; i < n; i++ {
+		subnet := <-ch
+		if subnet == nil {
+			return []Subnet{}, errors.New("could not retrieve subnets information")
+		}
+		subnets = append(subnets, NewSubnet(subnet)) // build each Subnet
+	}
+
+	return subnets, nil
 }

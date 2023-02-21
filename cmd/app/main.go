@@ -78,7 +78,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 
 	logger.Info("Setup completed")
 
-	vpcs, peerings, err := app.GetVPCsAndPeerings(config.App.HubProject)
+	vpcs, peerings, err := app.RetrieveVPCsAndPeerings(config.App.HubProject)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -89,7 +89,21 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 	}
 	fmt.Println("Peerings:")
 	for _, peering := range peerings {
-		fmt.Printf("- %v <-> %v\n", peering.VPC1SelfLink, peering.VPC2SelfLink)
+		fmt.Printf("- %v <-> %v\n",
+			gcputils.GetVPCName(peering.VPC1SelfLink),
+			gcputils.GetVPCName(peering.VPC2SelfLink))
+	}
+	fmt.Println("Subnets:")
+	for _, vpc := range vpcs {
+		fmt.Printf("- vpc: %v\n", vpc.Name)
+		subnets, err := app.RetrieveVPCSubnets(vpc)
+		if err != nil {
+			logger.Error(err.Error())
+			return err
+		}
+		for _, subnet := range subnets {
+			fmt.Printf("  - %v %v\n", subnet.Name, subnet.IPv4Range)
+		}
 	}
 
 	logger.Info("End")
@@ -161,7 +175,7 @@ func ListNetworks(config app.Config) error {
 
 		fmt.Printf("Peerings of %v:\n", network.GetName())
 		for _, peering := range network.Peerings {
-			fmt.Printf("- %v\n", gcputils.GetVPCFromVPC(peering.GetNetwork()))
+			fmt.Printf("- %v\n", gcputils.GetVPCName(peering.GetNetwork()))
 		}
 
 		fmt.Printf("Subnets of %v:\n", network.GetSelfLink())
@@ -172,7 +186,7 @@ func ListNetworks(config app.Config) error {
 		fmt.Println("VMs:")
 		ListAllInstances(projectID)
 		for _, peering := range network.Peerings {
-			ListAllInstances(gcputils.GetProjectFromVPC(peering.GetNetwork()))
+			ListAllInstances(gcputils.GetVPCProject(peering.GetNetwork()))
 		}
 	}
 

@@ -6,26 +6,31 @@ import (
 )
 
 // -----------------------------------------------------------------------------
+
 type VPC struct {
 	SelfLink string
 	Name     string
 	Project  string
+	Subnets  []string
 }
 
 func NewVPC(pb *computepb.Network) VPC {
 	return VPC{
 		SelfLink: pb.GetSelfLink(),
 		Name:     pb.GetName(),
-		Project:  gcputils.GetProjectFromVPC(pb.GetSelfLink()),
+		Project:  gcputils.GetVPCProject(pb.GetSelfLink()),
+		Subnets:  pb.GetSubnetworks(),
 	}
 }
 
 // -----------------------------------------------------------------------------
+
 type VPCPeering struct {
 	VPC1SelfLink, VPC2SelfLink string
 }
 
 // -----------------------------------------------------------------------------
+
 type Subnet struct {
 	SelfLink  string
 	Name      string
@@ -34,10 +39,16 @@ type Subnet struct {
 }
 
 func NewSubnet(pb *computepb.Subnetwork) Subnet {
-	return Subnet{} // TODO implement
+	return Subnet{
+		SelfLink:  pb.GetSelfLink(),
+		Name:      pb.GetName(),
+		Project:   gcputils.GetSubnetProject(pb.GetSelfLink()),
+		IPv4Range: pb.GetIpCidrRange(),
+	}
 }
 
 // -----------------------------------------------------------------------------
+
 type VM struct {
 	SelfLink   string
 	Name       string
