@@ -10,3 +10,9 @@ variable "free_machine_type" {
   type        = string
   default     = "e2-micro"
 }
+
+variable "enable_vm_creation" {
+  description = "Enable/disable the creation of VMs."
+  type        = bool
+  default     = false
+}

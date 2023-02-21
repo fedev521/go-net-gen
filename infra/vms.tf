@@ -4,6 +4,8 @@ locals {
 }
 
 module "hub_vm_01" {
+  count = var.enable_vm_creation ? 1 : 0
+
   source        = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/compute-vm?ref=v19.0.0"
   project_id    = module.hub_project.project_id
   name          = "vm-gonetgen-hub-usc1b-01"
@@ -21,6 +23,8 @@ module "hub_vm_01" {
 }
 
 module "spoke1_vm_01" {
+  count = var.enable_vm_creation ? 1 : 0
+
   source        = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/compute-vm?ref=v19.0.0"
   project_id    = module.spoke1_project.project_id
   name          = "vm-gonetgen-spoke1-usc1a-01"
