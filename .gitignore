@@ -54,3 +54,7 @@ terraform.rc
 
 # It's a secret to everybody
 secrets/gonetgen-sa-key.json
+
+# test output
+cmd/app/out.d2
+cmd/app/out.svg
