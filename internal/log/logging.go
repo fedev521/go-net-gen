@@ -37,7 +37,7 @@ func NewSimpleLogger() logur.LoggerFacade {
 func NewLogger(config Config) logur.LoggerFacade {
 	logger := logrus.New()
 
-	logger.SetOutput(os.Stdout)
+	logger.SetOutput(os.Stderr)
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
 	level, err := logrus.ParseLevel(config.Level)
