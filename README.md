@@ -39,5 +39,4 @@ d2 -w helloworld.d2 out.png
 
 ## Next
 
-- read information about related projects with GCP client library
 - put read information in a programmatically generated diagram

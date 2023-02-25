@@ -78,6 +78,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 
 	logger.Info("Setup completed")
 
+	logger.Info("Start gathering information from GCP")
 	vpcs, peerings, err := app.RetrieveVPCsAndPeerings(config.App.HubProject)
 	if err != nil {
 		logger.Error(err.Error())
@@ -136,6 +137,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 	for _, vm := range allVMs {
 		fmt.Printf("- %v %v\n", vm.Name, vm.InternalIP)
 	}
+	logger.Info("Finished gathering information from GCP")
 
 	logger.Info("End")
 
