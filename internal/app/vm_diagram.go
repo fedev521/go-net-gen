@@ -48,7 +48,7 @@ func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering) (*VMDiagramDrawer, er
 
 // add a configuration argument
 func (d *VMDiagramDrawer) Draw() error {
-	// draw VPC shapes and associate self link to shape key
+	// draw VPC shapes and associate id to shape key
 	for _, vpc := range d.vpcs {
 		g, k, err := d2oracle.Create(d.g, d.vpcTmpKey(vpc))
 		if err != nil {
@@ -58,6 +58,7 @@ func (d *VMDiagramDrawer) Draw() error {
 		d.g = g
 	}
 
+	// draw peering connections and associate id to shape key
 	for _, peering := range d.peerings {
 		g, k, err := d2oracle.Create(d.g, d.peeringTmpKey(peering))
 		if err != nil {
@@ -92,6 +93,17 @@ func (d *VMDiagramDrawer) beautify() error {
 		key := d.keys[d.peeringId(peering)]
 		label := d.peeringLabel(peering)
 		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.label", key), nil, &label)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
+
+	// set VPC icons
+	for _, vpc := range d.vpcs {
+		key := d.keys[d.vpcId(vpc)]
+		icon := "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FVirtual%20Private%20Cloud.svg"
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.icon", key), nil, &icon)
 		if err != nil {
 			return err
 		}
