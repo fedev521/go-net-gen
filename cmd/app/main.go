@@ -139,6 +139,26 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 	}
 	logger.Info("Finished gathering information from GCP")
 
+	logger.Info("Start diagram creation")
+	var drawer app.Drawer
+	drawer, err = app.NewVMDiagramDrawer(vpcs)
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
+	err = drawer.Draw()
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
+	err = drawer.Render()
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
 	logger.Info("End")
 
 	return nil

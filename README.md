@@ -40,3 +40,4 @@ d2 -w helloworld.d2 out.png
 ## Next
 
 - put read information in a programmatically generated diagram
+- read information from file rather than from GCP (test)
