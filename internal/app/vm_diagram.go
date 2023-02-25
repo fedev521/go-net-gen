@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"gitlab.com/garzelli95/go-net-gen/internal/d2utils"
+	"gitlab.com/garzelli95/go-net-gen/internal/gcputils"
 	"oss.terrastruct.com/d2/d2graph"
 	"oss.terrastruct.com/d2/d2lib"
 	"oss.terrastruct.com/d2/d2oracle"
@@ -24,19 +26,21 @@ type VMDiagramDrawer struct {
 	// the rectangle representing the VPC in the diagram.
 	keys map[string]string
 
-	vpcs []VPC
+	vpcs     []VPC
+	peerings []VPCPeering
 }
 
-func NewVMDiagramDrawer(vpcs []VPC) (*VMDiagramDrawer, error) {
+func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering) (*VMDiagramDrawer, error) {
 	_, graph, err := d2lib.Compile(context.Background(), "", nil)
 	if err != nil {
 		return &VMDiagramDrawer{}, err
 	}
 
 	d := VMDiagramDrawer{
-		g:    graph,
-		keys: make(map[string]string),
-		vpcs: vpcs,
+		g:        graph,
+		keys:     make(map[string]string),
+		vpcs:     vpcs,
+		peerings: peerings,
 	}
 
 	return &d, nil
@@ -46,24 +50,104 @@ func NewVMDiagramDrawer(vpcs []VPC) (*VMDiagramDrawer, error) {
 func (d *VMDiagramDrawer) Draw() error {
 	// draw VPC shapes and associate self link to shape key
 	for _, vpc := range d.vpcs {
-		g, k, err := d2oracle.Create(d.g, vpc.Name)
-		d.keys[vpc.SelfLink] = k
+		g, k, err := d2oracle.Create(d.g, d.vpcTmpKey(vpc))
+		if err != nil {
+			return err
+		}
+		d.keys[d.vpcId(vpc)] = k
+		d.g = g
+	}
+
+	for _, peering := range d.peerings {
+		g, k, err := d2oracle.Create(d.g, d.peeringTmpKey(peering))
+		if err != nil {
+			return err
+		}
+		d.keys[d.peeringId(peering)] = k
+		d.g = g
+	}
+
+	err := d.beautify()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *VMDiagramDrawer) beautify() error {
+	// set VPC labels
+	for _, vpc := range d.vpcs {
+		key := d.keys[d.vpcId(vpc)]
+		label := d.vpcLabel(vpc)
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.label", key), nil, &label)
 		if err != nil {
 			return err
 		}
 		d.g = g
 	}
 
-	d.beautify()
+	// set peering labels
+	for _, peering := range d.peerings {
+		key := d.keys[d.peeringId(peering)]
+		label := d.peeringLabel(peering)
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.label", key), nil, &label)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
 
 	return nil
-}
-
-func (d *VMDiagramDrawer) beautify() {
-
 }
 
 // add a configuration argument
 func (d *VMDiagramDrawer) Render() error {
 	return d2utils.RenderSVG(d.g)
 }
+
+// -----------------------------------------------------------------------------
+
+// A resource id is a string that identifies a GCP resource (e.g., a VPC, a VM,
+// or a peering). The shape key is the key found in the d2 script, i.e., the one
+// that Create() method returns. The temporary/tentative key is a string used as
+// parameter in the Create() method; as such, it should not contain slashes or
+// special characters. The label is the resource/shape displayed name (i.e., the
+// value of the label property associated to the shape key).
+
+// Resource ids mapped to (tentative) keys:
+// - VPC: self link
+// - VPCPeering: <vpc1name> <-> <vpc2name>
+
+func (d *VMDiagramDrawer) vpcId(vpc VPC) string {
+	return vpc.SelfLink
+}
+
+func (d *VMDiagramDrawer) vpcTmpKey(vpc VPC) string {
+	return vpc.Name
+}
+
+func (d *VMDiagramDrawer) vpcLabel(vpc VPC) string {
+	return fmt.Sprintf("%s VPC", vpc.Name)
+}
+
+// ---
+
+func (d *VMDiagramDrawer) peeringId(peering VPCPeering) string {
+	sl1, sl2 := peering.VPC1SelfLink, peering.VPC2SelfLink
+	return fmt.Sprintf("%s <-> %s", sl1, sl2)
+}
+
+func (d *VMDiagramDrawer) peeringTmpKey(peering VPCPeering) string {
+	sl1, sl2 := peering.VPC1SelfLink, peering.VPC2SelfLink
+	// FIXME: works as long as VPC tentative key and final one match. Should use
+	// self link to get the VPC structure, compute the id with vpcId(), use the
+	// id to find the true key in the keys map.
+	return fmt.Sprintf("%s <-> %s", gcputils.GetVPCName(sl1), gcputils.GetVPCName(sl2))
+}
+
+func (d *VMDiagramDrawer) peeringLabel(peering VPCPeering) string {
+	return "VPC Peering"
+}
+
+// ---
