@@ -42,4 +42,6 @@ d2 -w helloworld.d2 out.png
 - containerize
 - CI/CD integration
 - improve visually
+- fix TODOs
+- improve configuration management
 - generate service account key in Terraform without storing it state: [blueprint](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/v19.0.0/blueprints/cloud-operations/onprem-sa-key-management)

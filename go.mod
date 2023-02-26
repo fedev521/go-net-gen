@@ -6,6 +6,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
+	golang.org/x/image v0.1.0
 	google.golang.org/api v0.108.0
 	google.golang.org/protobuf v1.28.1
 	logur.dev/adapter/logrus v0.5.0
@@ -35,7 +36,6 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9 // indirect
-	golang.org/x/image v0.1.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
 	golang.org/x/term v0.3.0 // indirect
