@@ -32,12 +32,14 @@ echo 'x -> y' > helloworld.d2
 d2 -w helloworld.d2 out.png
 ```
 
-## TODO
-
-- generate service account key in Terraform without storing it state: [blueprint](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/v19.0.0/blueprints/cloud-operations/onprem-sa-key-management)
-- support different kinds of diagrams, e.g., focus on networking or on VMs
-
 ## Next
 
-- put read information in a programmatically generated diagram
 - read information from file rather than from GCP (test)
+- test program in a real project
+- try another layout
+- remove dead code
+- support a load balancer
+- containerize
+- CI/CD integration
+- improve visually
+- generate service account key in Terraform without storing it state: [blueprint](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/v19.0.0/blueprints/cloud-operations/onprem-sa-key-management)
