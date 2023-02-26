@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"gitlab.com/garzelli95/go-net-gen/internal/d2utils"
-	"gitlab.com/garzelli95/go-net-gen/internal/gcputils"
 	"oss.terrastruct.com/d2/d2graph"
 	"oss.terrastruct.com/d2/d2lib"
 	"oss.terrastruct.com/d2/d2oracle"
@@ -29,9 +28,10 @@ type VMDiagramDrawer struct {
 	vpcs     []VPC
 	peerings []VPCPeering
 	subnets  []Subnet
+	vms      []VM
 }
 
-func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering, subnets []Subnet) (*VMDiagramDrawer, error) {
+func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering, subnets []Subnet, vms []VM) (*VMDiagramDrawer, error) {
 	_, graph, err := d2lib.Compile(context.Background(), "", nil)
 	if err != nil {
 		return &VMDiagramDrawer{}, err
@@ -43,6 +43,7 @@ func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering, subnets []Subnet) (*V
 		vpcs:     vpcs,
 		peerings: peerings,
 		subnets:  subnets,
+		vms:      vms,
 	}
 
 	return &d, nil
@@ -77,6 +78,16 @@ func (d *VMDiagramDrawer) Draw() error {
 			return err
 		}
 		d.keys[d.subnetId(subnet)] = k
+		d.g = g
+	}
+
+	// draw vm shapes under subnets and associate id to shape key
+	for _, vm := range d.vms {
+		g, k, err := d2oracle.Create(d.g, d.vmTmpKey(vm))
+		if err != nil {
+			return err
+		}
+		d.keys[d.vmId(vm)] = k
 		d.g = g
 	}
 
@@ -133,6 +144,39 @@ func (d *VMDiagramDrawer) beautify() error {
 		d.g = g
 	}
 
+	// set vm labels
+	for _, vm := range d.vms {
+		key := d.keys[d.vmId(vm)]
+		label := d.vmLabel(vm)
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.label", key), nil, &label)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
+
+	// set vm icons
+	for _, vm := range d.vms {
+		key := d.keys[d.vmId(vm)]
+		icon := "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FCompute%2FCompute%20Engine.svg"
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.icon", key), nil, &icon)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
+
+	// set vm shape to image
+	for _, vm := range d.vms {
+		key := d.keys[d.vmId(vm)]
+		shape := "image"
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.shape", key), nil, &shape)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
+
 	return nil
 }
 
@@ -176,10 +220,9 @@ func (d *VMDiagramDrawer) peeringId(peering VPCPeering) string {
 
 func (d *VMDiagramDrawer) peeringTmpKey(peering VPCPeering) string {
 	sl1, sl2 := peering.VPC1SelfLink, peering.VPC2SelfLink
-	// NOTE: works as long as VPC tentative key and final one match. Should use
-	// self link to get the VPC structure, compute the id with vpcId(), use the
-	// id to find the true key in the keys map.
-	return fmt.Sprintf("%s <-> %s", gcputils.GetVPCName(sl1), gcputils.GetVPCName(sl2))
+	shape1, shape2 := d.keys[sl1], d.keys[sl2]
+	// NOTE: works as long as the VPC id is its self link
+	return fmt.Sprintf("%s <-> %s", shape1, shape2)
 }
 
 func (d *VMDiagramDrawer) peeringLabel(peering VPCPeering) string {
@@ -193,13 +236,27 @@ func (d *VMDiagramDrawer) subnetId(subnet Subnet) string {
 }
 
 func (d *VMDiagramDrawer) subnetTmpKey(subnet Subnet) string {
-	vpcName := gcputils.GetVPCName(subnet.VPCSelfLink)
-	// NOTE: works as long as VPC tentative key and final one match. Should use
-	// self link to get the VPC structure, compute the id with vpcId(), use the
-	// id to find the true key in the keys map.
-	return fmt.Sprintf("%s.%s", vpcName, subnet.Name)
+	containerKey := d.keys[subnet.VPCSelfLink]
+	// NOTE: works as long as the VPC id is its self link
+	return fmt.Sprintf("%s.%s", containerKey, subnet.Name)
 }
 
 func (d *VMDiagramDrawer) subnetLabel(subnet Subnet) string {
 	return fmt.Sprintf("Range %s", subnet.IPv4Range)
+}
+
+// ---
+
+func (d *VMDiagramDrawer) vmId(vm VM) string {
+	return vm.SelfLink
+}
+
+func (d *VMDiagramDrawer) vmTmpKey(vm VM) string {
+	containerKey := d.keys[vm.SubnetSelfLink]
+	// NOTE: works as long as the subnet id is its self link
+	return fmt.Sprintf("%s.%s", containerKey, vm.Name)
+}
+
+func (d *VMDiagramDrawer) vmLabel(vm VM) string {
+	return fmt.Sprintf("%s\n%s", vm.Name, vm.InternalIP)
 }

@@ -52,26 +52,33 @@ func NewSubnet(pb *computepb.Subnetwork) Subnet {
 // -----------------------------------------------------------------------------
 
 type VM struct {
-	SelfLink   string
-	Name       string
-	Project    string
-	Zone       string
-	InternalIP string
-	ExternalIP string
+	SelfLink       string
+	Name           string
+	Project        string
+	Zone           string
+	InternalIP     string
+	ExternalIP     string
+	VPCSelfLink    string
+	SubnetSelfLink string
 }
 
 func NewVM(pb *computepb.Instance) VM {
+	nic := pb.GetNetworkInterfaces()[0]
+
 	extIP := ""
-	ac := pb.GetNetworkInterfaces()[0].GetAccessConfigs()
+	ac := nic.GetAccessConfigs()
 	if len(ac) > 0 {
 		extIP = ac[0].GetNatIP()
 	}
+
 	return VM{
-		SelfLink:   pb.GetSelfLink(),
-		Name:       pb.GetName(),
-		Project:    gcputils.GetVMProject(pb.GetSelfLink()),
-		Zone:       gcputils.GetVMZone(pb.GetSelfLink()),
-		InternalIP: pb.GetNetworkInterfaces()[0].GetNetworkIP(),
-		ExternalIP: extIP,
+		SelfLink:       pb.GetSelfLink(),
+		Name:           pb.GetName(),
+		Project:        gcputils.GetVMProject(pb.GetSelfLink()),
+		Zone:           gcputils.GetVMZone(pb.GetSelfLink()),
+		ExternalIP:     extIP,
+		InternalIP:     nic.GetNetworkIP(),
+		VPCSelfLink:    nic.GetNetwork(),
+		SubnetSelfLink: nic.GetSubnetwork(),
 	}
 }

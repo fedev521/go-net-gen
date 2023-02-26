@@ -141,7 +141,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 
 	logger.Info("Start diagram creation")
 	var drawer app.Drawer
-	drawer, err = app.NewVMDiagramDrawer(vpcs, peerings, allSubnets)
+	drawer, err = app.NewVMDiagramDrawer(vpcs, peerings, allSubnets, allVMs)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
