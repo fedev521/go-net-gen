@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gitlab.com/garzelli95/go-net-gen/internal/d2utils"
+	"gitlab.com/garzelli95/go-net-gen/internal/style"
 	"oss.terrastruct.com/d2/d2graph"
 	"oss.terrastruct.com/d2/d2lib"
 	"oss.terrastruct.com/d2/d2oracle"
@@ -31,6 +32,7 @@ type VMDiagramDrawer struct {
 	vms      []VM
 }
 
+// TODO: add a configuration argument
 func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering, subnets []Subnet, vms []VM) (*VMDiagramDrawer, error) {
 	_, graph, err := d2lib.Compile(context.Background(), "", nil)
 	if err != nil {
@@ -49,7 +51,6 @@ func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering, subnets []Subnet, vms
 	return &d, nil
 }
 
-// add a configuration argument
 func (d *VMDiagramDrawer) Draw() error {
 	// draw VPC shapes and associate id to shape key
 	for _, vpc := range d.vpcs {
@@ -96,9 +97,15 @@ func (d *VMDiagramDrawer) Draw() error {
 		return err
 	}
 
+	err = d.style()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
+// Adds labels and icons to the diagram.
 func (d *VMDiagramDrawer) beautify() error {
 	// set VPC labels
 	for _, vpc := range d.vpcs {
@@ -116,17 +123,6 @@ func (d *VMDiagramDrawer) beautify() error {
 		key := d.keys[d.peeringId(peering)]
 		label := d.peeringLabel(peering)
 		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.label", key), nil, &label)
-		if err != nil {
-			return err
-		}
-		d.g = g
-	}
-
-	// set VPC icons
-	for _, vpc := range d.vpcs {
-		key := d.keys[d.vpcId(vpc)]
-		icon := "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FVirtual%20Private%20Cloud.svg"
-		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.icon", key), nil, &icon)
 		if err != nil {
 			return err
 		}
@@ -155,6 +151,17 @@ func (d *VMDiagramDrawer) beautify() error {
 		d.g = g
 	}
 
+	// set VPC icons
+	for _, vpc := range d.vpcs {
+		key := d.keys[d.vpcId(vpc)]
+		icon := "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FVirtual%20Private%20Cloud.svg"
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.icon", key), nil, &icon)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
+
 	// set vm icons
 	for _, vm := range d.vms {
 		key := d.keys[d.vmId(vm)]
@@ -175,6 +182,20 @@ func (d *VMDiagramDrawer) beautify() error {
 			return err
 		}
 		d.g = g
+	}
+
+	return nil
+}
+
+// Sets colors, font-styles, borders and so on.
+func (d *VMDiagramDrawer) style() error {
+
+	// set subnet colors
+	for _, subnet := range d.subnets {
+		key := d.keys[d.subnetId(subnet)]
+		d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.stroke", key), nil, &style.GoogleYellow)
+		d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.font-color", key), nil, &style.GoogleBlue)
+		d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.fill", key), nil, &style.White)
 	}
 
 	return nil

@@ -7,7 +7,7 @@ import (
 
 	"oss.terrastruct.com/d2/d2format"
 	"oss.terrastruct.com/d2/d2graph"
-	"oss.terrastruct.com/d2/d2layouts/d2dagrelayout"
+	"oss.terrastruct.com/d2/d2layouts/d2elklayout"
 	"oss.terrastruct.com/d2/d2lib"
 	"oss.terrastruct.com/d2/d2renderers/d2svg"
 	"oss.terrastruct.com/d2/lib/textmeasure"
@@ -23,8 +23,9 @@ func RenderSVG(g *d2graph.Graph) error {
 	// Compile the script into a diagram
 	ctx := context.Background()
 	diagram, _, _ := d2lib.Compile(ctx, script, &d2lib.CompileOptions{
-		Layout: d2dagrelayout.DefaultLayout,
-		Ruler:  ruler,
+		Layout:  d2elklayout.DefaultLayout,
+		Ruler:   ruler,
+		ThemeID: 105,
 	})
 
 	// Render to SVG

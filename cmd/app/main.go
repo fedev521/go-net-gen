@@ -6,19 +6,11 @@ import (
 	"os"
 
 	"context"
-	"path/filepath"
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/apiv1/computepb"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/proto"
-
-	"oss.terrastruct.com/d2/d2format"
-	"oss.terrastruct.com/d2/d2layouts/d2dagrelayout"
-	"oss.terrastruct.com/d2/d2lib"
-	"oss.terrastruct.com/d2/d2oracle"
-	"oss.terrastruct.com/d2/d2renderers/d2svg"
-	"oss.terrastruct.com/d2/lib/textmeasure"
 
 	"github.com/spf13/pflag"
 	"gitlab.com/garzelli95/go-net-gen/internal/app"
@@ -158,6 +150,7 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 		logger.Error(err.Error())
 		return err
 	}
+	logger.Info("Diagram created successfully")
 
 	logger.Info("End")
 
@@ -242,65 +235,6 @@ func ListNetworks(config app.Config) error {
 			ListAllInstances(gcputils.GetVPCProject(peering.GetNetwork()))
 		}
 	}
-
-	return nil
-}
-
-func CreateDiagram(config app.Config) error {
-	// Start with a new, empty graph g
-	_, g, err := d2lib.Compile(context.Background(), "", nil)
-	if err != nil {
-		return err
-	}
-
-	// Create shapes
-	g, _, _ = d2oracle.Create(g, "hub")
-	g, _, _ = d2oracle.Create(g, "spk1")
-	g, _, _ = d2oracle.Create(g, "spk2")
-
-	g, _, _ = d2oracle.Create(g, "hub.prj")
-	g, _, _ = d2oracle.Create(g, "spk1.prj")
-	g, _, _ = d2oracle.Create(g, "spk2.prj")
-
-	// Assign labels
-	label1, label2 := "Spoke 1 VPC", "Spoke 2 VPC"
-	g, _ = d2oracle.Set(g, "spk1.label", nil, &label1)
-	g, _ = d2oracle.Set(g, "spk2.label", nil, &label2)
-
-	// Create connections
-	vpcPeering := "VPC Peering"
-	g, k1, _ := d2oracle.Create(g, "hub <-> spk1")
-	g, _ = d2oracle.Set(g, fmt.Sprintf("%s.label", k1), nil, &vpcPeering)
-	g, k2, _ := d2oracle.Create(g, "hub <-> spk2")
-	g, _ = d2oracle.Set(g, fmt.Sprintf("%s.label", k2), nil, &vpcPeering)
-
-	// Beutify with icons
-	image := "image"
-	vpcIcon := "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FVirtual%20Private%20Cloud.svg"
-	g, _ = d2oracle.Set(g, "hub.prj.icon", nil, &vpcIcon)
-	g, _ = d2oracle.Set(g, "hub.prj.shape", nil, &image)
-
-	// Turn the graph into a script
-	script := d2format.Format(g.AST)
-
-	// Initialize a ruler to measure font glyphs
-	ruler, _ := textmeasure.NewRuler()
-
-	// Compile the script into a diagram
-	ctx := context.Background()
-	diagram, _, _ := d2lib.Compile(ctx, script, &d2lib.CompileOptions{
-		Layout: d2dagrelayout.DefaultLayout,
-		Ruler:  ruler,
-	})
-
-	// Render to SVG
-	diagramImage, _ := d2svg.Render(diagram, &d2svg.RenderOpts{
-		Pad: d2svg.DEFAULT_PADDING,
-	})
-
-	// Write to disk the script and the SVG image
-	_ = os.WriteFile(filepath.Join("out.svg"), diagramImage, 0600)
-	_ = os.WriteFile(filepath.Join("out.d2"), []byte(script), 0600)
 
 	return nil
 }
