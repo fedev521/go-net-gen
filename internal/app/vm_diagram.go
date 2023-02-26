@@ -28,9 +28,10 @@ type VMDiagramDrawer struct {
 
 	vpcs     []VPC
 	peerings []VPCPeering
+	subnets  []Subnet
 }
 
-func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering) (*VMDiagramDrawer, error) {
+func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering, subnets []Subnet) (*VMDiagramDrawer, error) {
 	_, graph, err := d2lib.Compile(context.Background(), "", nil)
 	if err != nil {
 		return &VMDiagramDrawer{}, err
@@ -41,6 +42,7 @@ func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering) (*VMDiagramDrawer, er
 		keys:     make(map[string]string),
 		vpcs:     vpcs,
 		peerings: peerings,
+		subnets:  subnets,
 	}
 
 	return &d, nil
@@ -65,6 +67,16 @@ func (d *VMDiagramDrawer) Draw() error {
 			return err
 		}
 		d.keys[d.peeringId(peering)] = k
+		d.g = g
+	}
+
+	// draw subnet shapes under VPCs and associate id to shape key
+	for _, subnet := range d.subnets {
+		g, k, err := d2oracle.Create(d.g, d.subnetTmpKey(subnet))
+		if err != nil {
+			return err
+		}
+		d.keys[d.subnetId(subnet)] = k
 		d.g = g
 	}
 
@@ -110,6 +122,17 @@ func (d *VMDiagramDrawer) beautify() error {
 		d.g = g
 	}
 
+	// set subnet labels
+	for _, subnet := range d.subnets {
+		key := d.keys[d.subnetId(subnet)]
+		label := d.subnetLabel(subnet)
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.label", key), nil, &label)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
+
 	return nil
 }
 
@@ -128,8 +151,9 @@ func (d *VMDiagramDrawer) Render() error {
 // value of the label property associated to the shape key).
 
 // Resource ids mapped to (tentative) keys:
-// - VPC: self link
-// - VPCPeering: <vpc1name> <-> <vpc2name>
+// - VPC: self link => name
+// - VPCPeering: <vpc1sl> <-> <vpc2sl> => <vpc1name> <-> <vpc2name>
+// - Subnet: self link => <vpcname>.<name>
 
 func (d *VMDiagramDrawer) vpcId(vpc VPC) string {
 	return vpc.SelfLink
@@ -152,7 +176,7 @@ func (d *VMDiagramDrawer) peeringId(peering VPCPeering) string {
 
 func (d *VMDiagramDrawer) peeringTmpKey(peering VPCPeering) string {
 	sl1, sl2 := peering.VPC1SelfLink, peering.VPC2SelfLink
-	// FIXME: works as long as VPC tentative key and final one match. Should use
+	// NOTE: works as long as VPC tentative key and final one match. Should use
 	// self link to get the VPC structure, compute the id with vpcId(), use the
 	// id to find the true key in the keys map.
 	return fmt.Sprintf("%s <-> %s", gcputils.GetVPCName(sl1), gcputils.GetVPCName(sl2))
@@ -163,3 +187,19 @@ func (d *VMDiagramDrawer) peeringLabel(peering VPCPeering) string {
 }
 
 // ---
+
+func (d *VMDiagramDrawer) subnetId(subnet Subnet) string {
+	return subnet.SelfLink
+}
+
+func (d *VMDiagramDrawer) subnetTmpKey(subnet Subnet) string {
+	vpcName := gcputils.GetVPCName(subnet.VPCSelfLink)
+	// NOTE: works as long as VPC tentative key and final one match. Should use
+	// self link to get the VPC structure, compute the id with vpcId(), use the
+	// id to find the true key in the keys map.
+	return fmt.Sprintf("%s.%s", vpcName, subnet.Name)
+}
+
+func (d *VMDiagramDrawer) subnetLabel(subnet Subnet) string {
+	return fmt.Sprintf("Range %s", subnet.IPv4Range)
+}

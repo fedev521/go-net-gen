@@ -32,18 +32,20 @@ type VPCPeering struct {
 // -----------------------------------------------------------------------------
 
 type Subnet struct {
-	SelfLink  string
-	Name      string
-	Project   string
-	IPv4Range string
+	SelfLink    string
+	Name        string
+	Project     string
+	IPv4Range   string
+	VPCSelfLink string
 }
 
 func NewSubnet(pb *computepb.Subnetwork) Subnet {
 	return Subnet{
-		SelfLink:  pb.GetSelfLink(),
-		Name:      pb.GetName(),
-		Project:   gcputils.GetSubnetProject(pb.GetSelfLink()),
-		IPv4Range: pb.GetIpCidrRange(),
+		SelfLink:    pb.GetSelfLink(),
+		Name:        pb.GetName(),
+		Project:     gcputils.GetSubnetProject(pb.GetSelfLink()),
+		IPv4Range:   pb.GetIpCidrRange(),
+		VPCSelfLink: pb.GetNetwork(),
 	}
 }
 
