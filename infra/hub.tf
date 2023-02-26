@@ -11,7 +11,7 @@ module "hub_project" {
 module "hub_vpc" {
   source      = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-vpc?ref=v19.0.0"
   project_id  = module.hub_project.project_id
-  name        = "vpc-gonetgen-hub-01"
+  name        = "vpc-gng-hub-01"
   data_folder = "net/subnets/hub"
 }
 
