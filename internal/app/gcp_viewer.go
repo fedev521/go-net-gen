@@ -13,8 +13,7 @@ import (
 
 // Given a project id (of the "hub"), RetrieveVPCsAndPeerings returns two slices
 // (after querying Google API). One contains all VPCs in the hub project as well
-// as all VPCs peered to that project; the other information about peergings, if
-// any.
+// as all VPCs peered to those; the other information about peerings, if any.
 func RetrieveVPCsAndPeerings(hubProjectID string) ([]VPC, []VPCPeering, error) {
 	// The function's results, i.e., all VPCs and peerings to be considered
 	vpcs := []VPC{}
@@ -172,4 +171,64 @@ func RetrieveVMs(projectID string) ([]VM, error) {
 	}
 
 	return vms, nil
+}
+
+// Given a project id, RetrieveSharedVPCServiceProjects returns the project ids
+// of all service projects that use that project as host in a Shared VPC
+// relationship.
+func RetrieveSharedVPCServiceProjects(hostProjectID string) ([]string, error) {
+	projectIDs := []string{}
+
+	ctx := context.Background()
+	projectsClient, err := compute.NewProjectsRESTClient(ctx)
+	if err != nil {
+		return []string{}, err
+	}
+	defer projectsClient.Close()
+
+	req := &computepb.GetXpnResourcesProjectsRequest{
+		Project: hostProjectID,
+	}
+	it := projectsClient.GetXpnResources(ctx, req)
+
+	for {
+		project, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return []string{}, err
+		}
+
+		projectIDs = append(projectIDs, project.GetId())
+	}
+
+	return projectIDs, nil
+}
+
+func RetrieveAllServiceProjects(hostProjectIDs []string) ([]string, error) {
+	allServiceProjectIDs := []string{}
+
+	// prepare channel
+	n := len(hostProjectIDs)
+	ch := make(chan []string, n)
+
+	// retrieve information about service projects (in parallel)
+	for _, hpid := range hostProjectIDs {
+		go func(hpid string, ch chan []string) {
+			// in case of errors, send just an empty slice
+			svcProjIDs, _ := RetrieveSharedVPCServiceProjects(hpid)
+			ch <- svcProjIDs
+		}(hpid, ch)
+	}
+
+	// gather results
+	for i := 0; i < n; i++ {
+		svcProjIDs := <-ch
+		allServiceProjectIDs = append(allServiceProjectIDs, svcProjIDs...)
+	}
+
+	// TODO: remove duplicates from service projects
+
+	return allServiceProjectIDs, nil
 }

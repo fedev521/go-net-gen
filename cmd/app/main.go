@@ -111,14 +111,19 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 	for _, subnet := range allSubnets {
 		fmt.Printf("- %v %v\n", subnet.Name, subnet.IPv4Range)
 	}
-	fmt.Println("Projects:")
-	projects := app.GetDistinctProjects(allSubnets)
-	for _, p := range projects {
+	fmt.Println("Host Projects:")
+	hostProjects := app.GetDistinctProjects(allSubnets)
+	for _, p := range hostProjects {
+		fmt.Printf("- %v\n", p)
+	}
+	fmt.Println("Service Projects:")
+	serviceProjects, _ := app.RetrieveAllServiceProjects(hostProjects)
+	for _, p := range serviceProjects {
 		fmt.Printf("- %v\n", p)
 	}
 	fmt.Println("VMs:")
 	allVMs := []app.VM{}
-	for _, project := range projects {
+	for _, project := range hostProjects {
 		vms, err := app.RetrieveVMs(project)
 		if err != nil {
 			logger.Error(err.Error())
