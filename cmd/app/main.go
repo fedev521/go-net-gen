@@ -122,8 +122,9 @@ func run(args []string, _ io.Reader, _ io.Writer) error {
 		fmt.Printf("- %v\n", p)
 	}
 	fmt.Println("VMs:")
+	projects := append(hostProjects, serviceProjects...)
 	allVMs := []app.VM{}
-	for _, project := range hostProjects {
+	for _, project := range projects {
 		vms, err := app.RetrieveVMs(project)
 		if err != nil {
 			logger.Error(err.Error())

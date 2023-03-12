@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"gitlab.com/garzelli95/go-net-gen/internal/d2utils"
-	"gitlab.com/garzelli95/go-net-gen/internal/style"
 	"oss.terrastruct.com/d2/d2graph"
 	"oss.terrastruct.com/d2/d2lib"
 	"oss.terrastruct.com/d2/d2oracle"
@@ -82,6 +81,21 @@ func (d *VMDiagramDrawer) Draw() error {
 		d.g = g
 	}
 
+	// draw project shapes under subnets and associate id to shape key
+	for _, vm := range d.vms {
+		// skip if project has been alredy drawn
+		_, found := d.keys[d.projectId(vm)]
+		if found {
+			continue
+		}
+		g, k, err := d2oracle.Create(d.g, d.projectTmpKey(vm))
+		if err != nil {
+			return err
+		}
+		d.keys[d.projectId(vm)] = k
+		d.g = g
+	}
+
 	// draw vm shapes under subnets and associate id to shape key
 	for _, vm := range d.vms {
 		g, k, err := d2oracle.Create(d.g, d.vmTmpKey(vm))
@@ -140,6 +154,17 @@ func (d *VMDiagramDrawer) beautify() error {
 		d.g = g
 	}
 
+	// set project labels
+	for _, vm := range d.vms {
+		key := d.keys[d.projectId(vm)]
+		label := d.projectLabel(vm)
+		g, err := d2oracle.Set(d.g, fmt.Sprintf("%s.label", key), nil, &label)
+		if err != nil {
+			return err
+		}
+		d.g = g
+	}
+
 	// set vm labels
 	for _, vm := range d.vms {
 		key := d.keys[d.vmId(vm)]
@@ -191,17 +216,17 @@ func (d *VMDiagramDrawer) beautify() error {
 func (d *VMDiagramDrawer) style() error {
 
 	// set subnet colors
-	for _, subnet := range d.subnets {
-		key := d.keys[d.subnetId(subnet)]
-		d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.stroke", key), nil, &style.GoogleYellow)
-		d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.font-color", key), nil, &style.GoogleBlue)
-		d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.fill", key), nil, &style.White)
-	}
+	// for _, subnet := range d.subnets {
+	// 	key := d.keys[d.subnetId(subnet)]
+	// 	d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.stroke", key), nil, &style.GoogleYellow)
+	// 	d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.font-color", key), nil, &style.GoogleBlue)
+	// 	d.g, _ = d2oracle.Set(d.g, fmt.Sprintf("%s.fill", key), nil, &style.White)
+	// }
 
 	return nil
 }
 
-// add a configuration argument
+// TODO add a configuration argument
 func (d *VMDiagramDrawer) Render() error {
 	return d2utils.RenderSVG(d.g)
 }
@@ -273,11 +298,27 @@ func (d *VMDiagramDrawer) vmId(vm VM) string {
 }
 
 func (d *VMDiagramDrawer) vmTmpKey(vm VM) string {
-	containerKey := d.keys[vm.SubnetSelfLink]
+	containerKey := d.keys[d.projectId(vm)]
 	// NOTE: works as long as the subnet id is its self link
 	return fmt.Sprintf("%s.%s", containerKey, vm.Name)
 }
 
 func (d *VMDiagramDrawer) vmLabel(vm VM) string {
 	return fmt.Sprintf("%s\n%s", vm.Name, vm.InternalIP)
+}
+
+// ---
+
+func (d *VMDiagramDrawer) projectId(vm VM) string {
+	return fmt.Sprintf("%s_%s", vm.SubnetSelfLink, vm.Project)
+}
+
+func (d *VMDiagramDrawer) projectTmpKey(vm VM) string {
+	containerKey := d.keys[vm.SubnetSelfLink]
+	// NOTE: works as long as the subnet id is its self link
+	return fmt.Sprintf("%s.%s", containerKey, vm.Project)
+}
+
+func (d *VMDiagramDrawer) projectLabel(vm VM) string {
+	return fmt.Sprintf("Project %s", vm.Project)
 }
