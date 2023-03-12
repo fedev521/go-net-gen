@@ -33,7 +33,7 @@ type VMDiagramDrawer struct {
 
 // TODO: add a configuration argument
 func NewVMDiagramDrawer(vpcs []VPC, peerings []VPCPeering, subnets []Subnet, vms []VM) (*VMDiagramDrawer, error) {
-	_, graph, err := d2lib.Compile(context.Background(), "", nil)
+	_, graph, err := d2lib.Compile(context.Background(), "direction: down", nil)
 	if err != nil {
 		return &VMDiagramDrawer{}, err
 	}
