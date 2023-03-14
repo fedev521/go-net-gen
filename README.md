@@ -32,13 +32,20 @@ echo 'x -> y' > helloworld.d2
 d2 -w helloworld.d2 out.png
 ```
 
+Useful:
+
+```powershell
+d2 \\wsl.localhost\Ubuntu-20.04\home\federico\projects\personal\go-net-gen\cmd\app\out.d2 out.png
+```
+
 ## Next
 
 - read information from file rather than from GCP (test)
-- test program in a real project
-- try another layout
+- exclude projects or VMs
+- don't print "Project" if project name is too long
+- try another diagram with shared VPC relationships
 - remove dead code
-- support a load balancer
+- support load balancers
 - containerize
 - CI/CD integration
 - improve visually

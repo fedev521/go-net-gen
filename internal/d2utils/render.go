@@ -13,7 +13,7 @@ import (
 	"oss.terrastruct.com/d2/lib/textmeasure"
 )
 
-// TODO configuration parameter for render options output files
+// TODO configuration parameter for render options and output files
 func RenderSVG(g *d2graph.Graph) error {
 	// Turn the graph into a script
 	script := d2format.Format(g.AST)
@@ -24,6 +24,7 @@ func RenderSVG(g *d2graph.Graph) error {
 	// Compile the script into a diagram
 	ctx := context.Background()
 	diagram, _, _ := d2lib.Compile(ctx, script, &d2lib.CompileOptions{
+		// Layout: d2dagrelayout.DefaultLayout,
 		Layout: d2elklayout.DefaultLayout,
 		Ruler:  ruler,
 	})

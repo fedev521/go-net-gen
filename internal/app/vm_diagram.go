@@ -254,7 +254,7 @@ func (d *VMDiagramDrawer) vpcTmpKey(vpc VPC) string {
 }
 
 func (d *VMDiagramDrawer) vpcLabel(vpc VPC) string {
-	return fmt.Sprintf("%s VPC", vpc.Name)
+	return fmt.Sprintf("VPC %s", vpc.Name)
 }
 
 // ---
