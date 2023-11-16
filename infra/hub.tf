@@ -1,6 +1,12 @@
+locals {
+  # should be a random_string resource, but otherwise cannot projects IAM
+  # permissions cannot be determined until apply
+  random_string_project = "ab01"
+}
+
 module "hub_project" {
   source          = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/project?ref=v19.0.0"
-  name            = "prj-gonetgen-infra-hub"
+  name            = "prj-gonetgen-infra-hub-${local.random_string_project}"
   billing_account = var.billing_account
 
   services = [
