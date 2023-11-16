@@ -1,5 +1,5 @@
 # build stage
-FROM golang:1.19 AS builder
+FROM golang:1.21.4 AS builder
 
 WORKDIR /go/src/app
 
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go vet -v
 
 # package stage
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/static-debian12
 WORKDIR /
 COPY --from=builder /go/bin/app .
 COPY configs .

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fedev521/go-net-gen/internal/app"
+	"github.com/fedev521/go-net-gen/internal/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"gitlab.com/garzelli95/go-net-gen/internal/app"
-	"gitlab.com/garzelli95/go-net-gen/internal/log"
 )
 
 // Overall program configuration.

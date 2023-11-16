@@ -6,7 +6,7 @@ import (
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/apiv1/computepb"
-	"gitlab.com/garzelli95/go-net-gen/internal/gcputils"
+	"github.com/fedev521/go-net-gen/internal/gcputils"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/proto"
 )

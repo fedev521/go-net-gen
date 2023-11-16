@@ -3,4 +3,4 @@ level = "info"
 
 [app]
 name = "gonetgen"
-hub_project_id = "prj-gonetgen-infra-hub"
+hub_project_id = "prj-gonetgen-infra-hub-abcd"

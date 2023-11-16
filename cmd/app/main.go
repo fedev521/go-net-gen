@@ -5,10 +5,10 @@ import (
 	"io"
 	"os"
 
+	"github.com/fedev521/go-net-gen/internal/app"
+	"github.com/fedev521/go-net-gen/internal/gcputils"
+	"github.com/fedev521/go-net-gen/internal/log"
 	"github.com/spf13/pflag"
-	"gitlab.com/garzelli95/go-net-gen/internal/app"
-	"gitlab.com/garzelli95/go-net-gen/internal/gcputils"
-	"gitlab.com/garzelli95/go-net-gen/internal/log"
 )
 
 const (
@@ -23,6 +23,7 @@ func main() {
 			os.Exit(exitUnexpected)
 		}
 	}()
+
 	if err := run(os.Args, os.Stdin, os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(exitError)
