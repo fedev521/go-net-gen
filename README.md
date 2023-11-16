@@ -1,25 +1,31 @@
 # Go Net Gen
 
+Generate network diagrams of VMs in VPCs on Google Cloud automatically. Supports
+VPC peering and Shared VPCs.
+
+## Sample Output
+
+![](img/example-output.png)
+
 ## Setup
 
-- `terraform init && terraform apply`
-- download service account key from GCP
-- `cd secrets && export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gonetgen-sa-key.json"`
+1. Create an infrastructure
+   1. `cd infra`
+   2. add terraform.tfvars (see the sample file)
+   3. update `local.random_string_project` with a random string
+   4. terraform init && terraform apply
+   5. this will create 3 projects and 8 VMs (please, mind costs)
+   6. you can skip these steps if you already have a service account, VMs and
+      VPC
+2. Download the service account key from GCP (in the hub project), it has
+   Network Reader role on each project. Save it in the "secrets" folder.
+3. `cd secrets && export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gonetgen-sa-key.json"`
+4. create a `config.toml` file (see the sample file)
+5. `cd cmd/app && go run .`
 
-## Boilerplate
-
-Features:
-
-- Dockerfile that leverages cache to avoid unnecessary downloads, compilations
-  and tests. It uses a distroless Debian image. Build with `DOCKER_BUILDKIT=1
-  docker build -t "<imagename>:latest" .`
-- logging: uses [logur](https://github.com/logur/logur) as a facade (and
-  adapter) and [logrus](https://github.com/sirupsen/logrus) under the hood.
-  Always uses JSON formatter.
-- configuration: uses [viper](https://github.com/spf13/viper). Convention:
-  mandatory configuration file named `config.toml`.
-- flags: with [pflag](https://github.com/spf13/pflag)
-- a `run()` function to facilitate tests.
+Note that downloading a service account key is a bad practice in general and
+should be avoided. Deploying a service on GCP, e.g. on Cloud Run, and attaching
+the SA would be better.
 
 ## Resources
 
@@ -34,21 +40,6 @@ d2 -w helloworld.d2 out.png
 
 Useful:
 
-```powershell
-d2 \\wsl.localhost\Ubuntu-20.04\home\federico\projects\personal\go-net-gen\cmd\app\out.d2 out.png
+```bash
+d2 cmd/app/out.d2 out.png
 ```
-
-## Next
-
-- read information from file rather than from GCP (test)
-- exclude projects or VMs
-- don't print "Project" if project name is too long
-- try another diagram with shared VPC relationships
-- remove dead code
-- support load balancers
-- containerize
-- CI/CD integration
-- improve visually
-- fix TODOs
-- improve configuration management
-- generate service account key in Terraform without storing it state: [blueprint](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/v19.0.0/blueprints/cloud-operations/onprem-sa-key-management)

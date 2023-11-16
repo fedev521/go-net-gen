@@ -1,0 +1,2 @@
+billing_account    = "A1B2C3-A1B2C3-A1B2C3"
+enable_vm_creation = true
