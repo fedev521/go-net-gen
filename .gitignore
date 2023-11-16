@@ -62,3 +62,5 @@ configs/config.toml
 cmd/app/out.d2
 cmd/app/out.svg
 cmd/app/out.png
+
+target/
